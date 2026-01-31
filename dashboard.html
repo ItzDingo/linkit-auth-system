@@ -291,18 +291,24 @@
     <!-- Main Content -->
     <div class="container" id="mainContent" style="display: none;">
         <div class="welcome-section">
-            <h1 class="welcome-title">Welcome to Your Dashboard</h1>
-            <p class="welcome-subtitle">Enjoy exclusive content</p>
+            <h1 class="welcome-title">Welcome to The Dashboard</h1>
+            <p class="welcome-subtitle"</p>
         </div>
 
         <div class="video-section">
             <h2 class="video-title">Featured Video</h2>
             <div class="video-container">
-                <!-- Video Player - Replace 'your-video.mp4' with your actual video file -->
-                <video id="mainVideo" autoplay loop muted playsinline>
-                    <source src="video.mp4" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
+                <!-- YouTube Player - Replace VIDEO_ID with your YouTube video ID -->
+                <iframe 
+                    id="youtubePlayer"
+                    width="100%" 
+                    height="100%" 
+                    src="https://www.youtube.com/embed/dGlgAgVcfq8?autoplay=1&loop=1&controls=0&disablekb=1&fs=0&modestbranding=1&playsinline=1&rel=0&showinfo=0&mute=0&playlist=VIDEO_ID&enablejsapi=1"
+                    title="Featured Video" 
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    style="pointer-events: none;"
+                ></iframe>
                 <!-- Overlay to prevent user interaction -->
                 <div class="video-overlay"></div>
             </div>
@@ -378,69 +384,99 @@
                     if (data.banned === true) {
                         alert('Your account has been banned!');
                         localStorage.clear();
-                        window.location.href = 'index.html';
+                        window.location.href = 'login.html';
                     }
                 } else {
                     alert('Your device authorization has been revoked.');
                     localStorage.clear();
-                    window.location.href = 'index.html';
+                    window.location.href = 'login.html';
                 }
             });
         }
 
-        // Initialize video with full volume and ensure it plays
-        function initializeVideo() {
-            const video = document.getElementById('mainVideo');
-            
-            // Set volume to maximum
-            video.volume = 1.0;
-            
-            // Remove muted to enable sound
-            video.muted = false;
-            
-            // Force play
-            const playPromise = video.play();
-            
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    console.log('Video playing successfully');
-                }).catch(error => {
-                    console.log('Autoplay blocked, trying again...');
-                    // Try playing after user interaction
-                    document.body.addEventListener('click', () => {
-                        video.play();
-                    }, { once: true });
-                });
-            }
+        // YouTube Player API
+        let player;
+        
+        // Load YouTube IFrame API
+        function loadYouTubeAPI() {
+            const tag = document.createElement('script');
+            tag.src = 'https://www.youtube.com/iframe_api';
+            const firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
 
-            // Prevent any pause attempts
-            video.addEventListener('pause', (e) => {
-                video.play();
-            });
-
-            // Prevent any volume change attempts
-            video.addEventListener('volumechange', (e) => {
-                if (video.volume !== 1.0) {
-                    video.volume = 1.0;
-                }
-                if (video.muted) {
-                    video.muted = false;
+        // Initialize YouTube player when API is ready
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('youtubePlayer', {
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
                 }
             });
+        }
 
-            // Disable right-click on video
-            video.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                return false;
-            });
-
+        // When player is ready
+        function onPlayerReady(event) {
+            console.log('YouTube player ready');
+            
+            // Set volume to maximum (100)
+            event.target.setVolume(100);
+            
+            // Unmute the player
+            event.target.unMute();
+            
+            // Start playing
+            event.target.playVideo();
+            
             // Prevent keyboard controls
             document.addEventListener('keydown', (e) => {
-                // Prevent spacebar (pause), arrow keys (seek), etc.
-                if (e.target === video || e.keyCode === 32 || e.keyCode === 37 || e.keyCode === 39) {
+                // Prevent spacebar, arrow keys, etc.
+                if (e.keyCode === 32 || e.keyCode === 37 || e.keyCode === 39 || e.keyCode === 38 || e.keyCode === 40) {
                     e.preventDefault();
                 }
             });
+        }
+
+        // Monitor player state
+        function onPlayerStateChange(event) {
+            // If video is paused or ended, play it again
+            if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
+                event.target.playVideo();
+            }
+            
+            // Ensure volume stays at 100
+            if (event.target.getVolume() !== 100) {
+                event.target.setVolume(100);
+            }
+            
+            // Ensure it's unmuted
+            if (event.target.isMuted()) {
+                event.target.unMute();
+            }
+        }
+
+        // Continuously monitor and enforce video playing
+        function enforceVideoPlaying() {
+            setInterval(() => {
+                if (player && player.getPlayerState) {
+                    const state = player.getPlayerState();
+                    
+                    // If not playing, force play
+                    if (state !== YT.PlayerState.PLAYING) {
+                        player.playVideo();
+                    }
+                    
+                    // Enforce volume
+                    if (player.getVolume() !== 100) {
+                        player.setVolume(100);
+                    }
+                    
+                    // Enforce unmuted
+                    if (player.isMuted()) {
+                        player.unMute();
+                    }
+                }
+            }, 1000); // Check every second
         }
 
         // Verify user and load dashboard
@@ -450,7 +486,7 @@
                 
                 if (!deviceId) {
                     // No device ID, redirect to login
-                    window.location.href = 'index.html';
+                    window.location.href = 'login.html';
                     return;
                 }
 
@@ -462,7 +498,7 @@
                 if (!deviceData) {
                     // Device not found
                     localStorage.clear();
-                    window.location.href = 'index.html';
+                    window.location.href = 'login.html';
                     return;
                 }
 
@@ -470,13 +506,13 @@
                     // Device is banned
                     alert('Your account has been banned.');
                     localStorage.clear();
-                    window.location.href = 'index.html';
+                    window.location.href = 'login.html';
                     return;
                 }
 
                 if (deviceData.status !== 'active' || !deviceData.username) {
                     // Not fully set up
-                    window.location.href = 'index.html';
+                    window.location.href = 'login.html';
                     return;
                 }
 
@@ -503,12 +539,15 @@
                 document.getElementById('loadingScreen').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
 
-                // Initialize video
-                initializeVideo();
+                // Load YouTube API
+                loadYouTubeAPI();
+                
+                // Start enforcing video playing
+                enforceVideoPlaying();
 
             } catch (error) {
                 console.error('Error verifying user:', error);
-                window.location.href = 'index.html';
+                window.location.href = 'login.html';
             }
         }
 
@@ -522,6 +561,9 @@
 
         // Initialize on page load
         verifyAndLoadDashboard();
+        
+        // Make onYouTubeIframeAPIReady available globally
+        window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
     </script>
 </body>
 </html>
