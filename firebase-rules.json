@@ -1,0 +1,62 @@
+{
+  "rules": {
+    "verification_codes": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$code": {
+        ".read": true,
+        ".write": true,
+        ".validate": "newData.hasChildren(['code', 'status', 'createdAt', 'expiresAt', 'used'])",
+        "code": {
+          ".validate": "newData.isString() && newData.val().length >= 8"
+        },
+        "status": {
+          ".validate": "newData.isString() && (newData.val() === 'pending' || newData.val() === 'verified' || newData.val() === 'expired')"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "expiresAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "used": {
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    },
+    "verified_devices": {
+      ".read": "auth != null",
+      "$device": {
+        ".read": true,
+        ".write": "auth != null || !data.exists()",
+        ".validate": "newData.hasChildren(['hwid', 'verifiedAt', 'status', 'banned'])",
+        "hwid": {
+          ".validate": "newData.isString()"
+        },
+        "verifiedAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "status": {
+          ".validate": "newData.isString() && (newData.val() === 'active' || newData.val() === 'banned')"
+        },
+        "banned": {
+          ".validate": "newData.isBoolean()"
+        },
+        "username": {
+          ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 30"
+        }
+      }
+    },
+    "usernames": {
+      ".read": true,
+      ".write": "auth != null",
+      "$username": {
+        ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 30"
+      }
+    },
+    "banned_devices": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}

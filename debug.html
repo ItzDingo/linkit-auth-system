@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkIT Debug Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0f172a;
+            color: #f1f5f9;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #3b82f6;
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+
+        .section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            color: #60a5fa;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            color: #94a3b8;
+            font-weight: bold;
+        }
+
+        .value {
+            color: #10b981;
+            word-break: break-all;
+            max-width: 500px;
+            text-align: right;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        button.danger {
+            background: #ef4444;
+        }
+
+        button.danger:hover {
+            background: #dc2626;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status.active {
+            background: #10b981;
+            color: white;
+        }
+
+        .status.inactive {
+            background: #ef4444;
+            color: white;
+        }
+
+        .status.unknown {
+            background: #64748b;
+            color: white;
+        }
+
+        pre {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-top: 10px;
+            border: 1px solid #334155;
+        }
+
+        .loading {
+            color: #94a3b8;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 LinkIT Debug Panel</h1>
+
+        <div class="section">
+            <h2>Browser Information</h2>
+            <div class="info-row">
+                <span class="label">Device Fingerprint:</span>
+                <span class="value" id="fingerprint">Generating...</span>
+            </div>
+            <div class="info-row">
+                <span class="label">User Agent:</span>
+                <span class="value" id="userAgent">-</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Platform:</span>
+                <span class="value" id="platform">-</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Screen Resolution:</span>
+                <span class="value" id="screen">-</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Browser Storage Status</h2>
+            <div class="info-row">
+                <span class="label">LocalStorage Enabled:</span>
+                <span class="value" id="storageEnabled">Checking...</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Private/Incognito Mode:</span>
+                <span class="value" id="privateMode">Checking...</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Total LocalStorage Items:</span>
+                <span class="value" id="totalItems">0</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Session Active:</span>
+                <span class="value" id="sessionActive">Checking...</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>LocalStorage Data</h2>
+            <div class="info-row">
+                <span class="label">Stored Device ID (Decrypted):</span>
+                <span class="value" id="storedDeviceId">-</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Encrypted Value:</span>
+                <span class="value" id="encryptedValue" style="font-size: 10px; word-break: break-all;">-</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Encryption Status:</span>
+                <span class="value" id="encryptionStatus">-</span>
+            </div>
+            <button onclick="clearLocalStorage()" class="danger">Clear LocalStorage</button>
+        </div>
+
+        <div class="section">
+            <h2>Firebase Device Status</h2>
+            <div class="info-row">
+                <span class="label">Device Status:</span>
+                <span class="value" id="deviceStatus"><span class="loading">Checking...</span></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Fingerprint Match:</span>
+                <span class="value" id="fingerprintMatch"><span class="loading">Checking...</span></span>
+            </div>
+            <div class="info-row">
+                <span class="label">Username:</span>
+                <span class="value" id="username">-</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Banned:</span>
+                <span class="value" id="banned">-</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Verified At:</span>
+                <span class="value" id="verifiedAt">-</span>
+            </div>
+            <button onclick="checkFirebase()">Refresh Firebase Status</button>
+        </div>
+
+        <div class="section">
+            <h2>Full Device Data (Firebase)</h2>
+            <pre id="deviceData">Loading...</pre>
+        </div>
+
+        <div class="section">
+            <h2>Manual Device Sync (Advanced)</h2>
+            <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">
+                If you have a device ID in Firebase but not in localStorage, you can manually sync it here.
+            </p>
+            <div class="info-row">
+                <span class="label">Enter Device ID:</span>
+                <input type="text" id="manualDeviceId" placeholder="abc123def456" style="background: var(--primary); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 6px; flex: 1; font-family: 'Courier New', monospace;">
+            </div>
+            <button onclick="syncDeviceManually()" style="background: #10b981; margin-top: 10px;">Sync Device ID to LocalStorage</button>
+        </div>
+
+        <div class="section">
+            <h2>Actions</h2>
+            <button onclick="window.location.href='login.html'">Go to Login Page</button>
+            <button onclick="testAutoLogin()">Test Auto-Login</button>
+            <button onclick="testTampering()" style="background: #f59e0b;">Test Tampering (Security Demo)</button>
+            <button onclick="clearAll()" class="danger">Clear Everything & Start Fresh</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB4R88Z49bHGPq4xGGDMaKyEqorrYAbOIE",
+            authDomain: "linkit-32d13.firebaseapp.com",
+            databaseURL: "https://linkit-32d13-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "linkit-32d13",
+            storageBucket: "linkit-32d13.appspot.com",
+            messagingSenderId: "263530134949",
+            appId: "1:263530134949:web:ead6c09dffa2510ce3fc4c"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Security: Same encryption as auth.js
+        const ENCRYPTION_SALT = 'LinkIT_SecureAuth_2024_v1';
+
+        // Decrypt data from localStorage
+        async function decryptData(encryptedData) {
+            try {
+                console.log('Attempting to decrypt:', encryptedData.substring(0, 50) + '...');
+                const decoded = atob(encryptedData);
+                const parts = decoded.split('|');
+                
+                if (parts.length !== 2) {
+                    console.error('Invalid encrypted data format');
+                    return null;
+                }
+                
+                const [data, storedHash] = parts;
+                
+                const encoder = new TextEncoder();
+                const dataBuffer = encoder.encode(data + ENCRYPTION_SALT);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const calculatedHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                
+                console.log('Stored hash:', storedHash);
+                console.log('Calculated hash:', calculatedHash);
+                
+                if (calculatedHash === storedHash) {
+                    console.log('Hash verified! Decrypted data:', data);
+                    return data;
+                } else {
+                    console.warn('Hash verification failed - data has been tampered with!');
+                    return null;
+                }
+            } catch (error) {
+                console.error('Decryption error:', error);
+                return null;
+            }
+        }
+
+        // Encrypt data for localStorage
+        async function encryptData(data) {
+            const encoder = new TextEncoder();
+            const dataBuffer = encoder.encode(data + ENCRYPTION_SALT);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            
+            // Return base64 encoded combination of data and hash
+            const combined = btoa(data + '|' + hashHex);
+            return combined;
+        }
+
+        // Set secure storage
+        async function setSecureStorage(key, value) {
+            const encrypted = await encryptData(value);
+            localStorage.setItem(key, encrypted);
+            return encrypted;
+        }
+
+        // Get secure storage
+        async function getSecureStorage(key) {
+            const encrypted = localStorage.getItem(key);
+            console.log('Getting secure storage for key:', key);
+            console.log('Encrypted value exists:', !!encrypted);
+            
+            if (!encrypted) {
+                console.log('No encrypted data found');
+                return null;
+            }
+            
+            return await decryptData(encrypted);
+        }
+
+        // Generate device fingerprint (same as in auth.js)
+        async function generateDeviceFingerprint() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('fingerprint', 2, 2);
+            const canvasData = canvas.toDataURL();
+            
+            const fingerprint = {
+                userAgent: navigator.userAgent,
+                language: navigator.language,
+                platform: navigator.platform,
+                screenResolution: `${screen.width}x${screen.height}`,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                canvas: canvasData,
+                hardwareConcurrency: navigator.hardwareConcurrency,
+                deviceMemory: navigator.deviceMemory || 'unknown',
+                colorDepth: screen.colorDepth
+            };
+            
+            const fingerprintString = JSON.stringify(fingerprint);
+            const encoder = new TextEncoder();
+            const data = encoder.encode(fingerprintString);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            
+            return hashHex;
+        }
+
+        let deviceFingerprint = '';
+
+        // Check if localStorage is working and detect incognito
+        function checkStorageStatus() {
+            // Check if localStorage is enabled
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                document.getElementById('storageEnabled').innerHTML = '<span class="status active">YES ✓</span>';
+            } catch (e) {
+                document.getElementById('storageEnabled').innerHTML = '<span class="status inactive">NO ✗</span>';
+                console.error('LocalStorage is disabled or not available:', e);
+            }
+
+            // Try to detect private/incognito mode
+            const isPrivate = async () => {
+                try {
+                    // Test if we can use FileSystem API (fails in incognito)
+                    if ('storage' in navigator && 'estimate' in navigator.storage) {
+                        const estimate = await navigator.storage.estimate();
+                        // In incognito mode, quota is typically much smaller
+                        const isIncognito = estimate.quota < 120000000; // Less than ~120MB suggests incognito
+                        return isIncognito;
+                    }
+                    return false;
+                } catch (e) {
+                    return false;
+                }
+            };
+
+            isPrivate().then(result => {
+                if (result) {
+                    document.getElementById('privateMode').innerHTML = '<span class="status inactive">YES (May affect storage) ⚠️</span>';
+                } else {
+                    document.getElementById('privateMode').innerHTML = '<span class="status active">NO ✓</span>';
+                }
+            });
+
+            // Count localStorage items
+            document.getElementById('totalItems').textContent = localStorage.length;
+
+            // Check if we have an active session
+            const hasDeviceId = !!localStorage.getItem('linkit_device_id');
+            if (hasDeviceId) {
+                document.getElementById('sessionActive').innerHTML = '<span class="status active">YES ✓</span>';
+            } else {
+                document.getElementById('sessionActive').innerHTML = '<span class="status unknown">NO</span>';
+            }
+        }
+
+        async function init() {
+            console.log('=== DEBUG PANEL INITIALIZATION ===');
+            console.log('Initializing debug panel...');
+            
+            // Check storage status first
+            checkStorageStatus();
+            
+            // Check all localStorage items
+            console.log('=== CHECKING ALL LOCALSTORAGE ITEMS ===');
+            console.log('Total localStorage items:', localStorage.length);
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                console.log(`LocalStorage[${i}]: ${key} = ${value ? value.substring(0, 50) + '...' : 'null'}`);
+            }
+            
+            // Generate fingerprint
+            deviceFingerprint = await generateDeviceFingerprint();
+            console.log('Device fingerprint:', deviceFingerprint);
+            document.getElementById('fingerprint').textContent = deviceFingerprint;
+            
+            // Show browser info
+            document.getElementById('userAgent').textContent = navigator.userAgent;
+            document.getElementById('platform').textContent = navigator.platform;
+            document.getElementById('screen').textContent = `${screen.width}x${screen.height}`;
+            
+            // Show localStorage - ENCRYPTED AND DECRYPTED
+            console.log('=== CHECKING LINKIT_DEVICE_ID ===');
+            console.log('Checking localStorage for linkit_device_id...');
+            const encryptedValue = localStorage.getItem('linkit_device_id');
+            console.log('Raw encrypted value:', encryptedValue);
+            console.log('Encrypted value exists:', !!encryptedValue);
+            console.log('Encrypted value type:', typeof encryptedValue);
+            console.log('Encrypted value length:', encryptedValue ? encryptedValue.length : 0);
+            
+            if (encryptedValue) {
+                // Show encrypted value
+                document.getElementById('encryptedValue').textContent = encryptedValue;
+                
+                // Try to decrypt
+                console.log('Attempting to decrypt device ID...');
+                const decryptedId = await getSecureStorage('linkit_device_id');
+                console.log('Decrypted ID result:', decryptedId);
+                
+                if (decryptedId) {
+                    document.getElementById('storedDeviceId').textContent = decryptedId;
+                    document.getElementById('encryptionStatus').innerHTML = '<span class="status active">Valid ✓</span>';
+                } else {
+                    document.getElementById('storedDeviceId').textContent = 'DECRYPTION FAILED (Tampered!)';
+                    document.getElementById('storedDeviceId').style.color = '#ef4444';
+                    document.getElementById('encryptionStatus').innerHTML = '<span class="status inactive">Tampered ✗</span>';
+                }
+            } else {
+                console.log('❌ No encrypted value found in localStorage!');
+                console.log('Possible reasons:');
+                console.log('1. User has not completed login/verification');
+                console.log('2. LocalStorage was cleared');
+                console.log('3. Browser is in private/incognito mode');
+                console.log('4. Different browser or profile');
+                console.log('5. Cookies/storage disabled');
+                
+                document.getElementById('storedDeviceId').textContent = 'None - Please login first';
+                document.getElementById('encryptedValue').textContent = 'None';
+                document.getElementById('encryptionStatus').innerHTML = '<span class="status unknown">Not Set</span>';
+            }
+            
+            // Check Firebase
+            console.log('=== CHECKING FIREBASE ===');
+            console.log('Checking Firebase...');
+            await checkFirebase();
+            
+            console.log('=== INITIALIZATION COMPLETE ===');
+        }
+
+        async function checkFirebase() {
+            console.log('Starting Firebase check...');
+            
+            // Get DECRYPTED device ID
+            const storedDeviceId = await getSecureStorage('linkit_device_id');
+            console.log('Decrypted device ID for Firebase check:', storedDeviceId);
+            
+            if (storedDeviceId) {
+                try {
+                    console.log('Querying Firebase for device:', storedDeviceId);
+                    const deviceRef = database.ref('verified_devices/' + storedDeviceId);
+                    const snapshot = await deviceRef.once('value');
+                    const deviceData = snapshot.val();
+                    
+                    console.log('Firebase response:', deviceData);
+                    
+                    if (deviceData) {
+                        displayDeviceData(deviceData);
+                    } else {
+                        console.warn('Device not found in Firebase');
+                        document.getElementById('deviceStatus').innerHTML = '<span class="status inactive">NOT FOUND</span>';
+                        document.getElementById('fingerprintMatch').innerHTML = '<span class="status unknown">N/A</span>';
+                        document.getElementById('deviceData').textContent = 'Device ID in localStorage not found in Firebase. You may need to verify again.';
+                        document.getElementById('username').textContent = 'N/A';
+                        document.getElementById('banned').textContent = 'N/A';
+                        document.getElementById('verifiedAt').textContent = 'N/A';
+                    }
+                } catch (error) {
+                    console.error('Firebase error:', error);
+                    document.getElementById('deviceStatus').innerHTML = '<span class="status inactive">ERROR</span>';
+                    document.getElementById('fingerprintMatch').innerHTML = '<span class="status unknown">N/A</span>';
+                    document.getElementById('deviceData').textContent = 'Error: ' + error.message;
+                    document.getElementById('username').textContent = 'N/A';
+                    document.getElementById('banned').textContent = 'N/A';
+                    document.getElementById('verifiedAt').textContent = 'N/A';
+                }
+            } else {
+                console.log('No device ID to check in Firebase');
+                document.getElementById('deviceStatus').innerHTML = '<span class="status unknown">NO DEVICE ID</span>';
+                document.getElementById('fingerprintMatch').innerHTML = '<span class="status unknown">N/A</span>';
+                document.getElementById('deviceData').textContent = 'No device ID stored in localStorage. Complete verification first.';
+                document.getElementById('username').textContent = 'N/A';
+                document.getElementById('banned').textContent = 'N/A';
+                document.getElementById('verifiedAt').textContent = 'N/A';
+            }
+        }
+
+        function displayDeviceData(data) {
+            console.log('Displaying device data:', data);
+            
+            const status = data.status === 'active' ? 'ACTIVE' : 'INACTIVE';
+            const statusClass = data.status === 'active' ? 'active' : 'inactive';
+            
+            document.getElementById('deviceStatus').innerHTML = `<span class="status ${statusClass}">${status}</span>`;
+            
+            // Check if fingerprint matches
+            if (data.browserFingerprint) {
+                console.log('Stored fingerprint:', data.browserFingerprint);
+                console.log('Current fingerprint:', deviceFingerprint);
+                
+                if (data.browserFingerprint === deviceFingerprint) {
+                    document.getElementById('fingerprintMatch').innerHTML = '<span class="status active">MATCH ✓</span>';
+                } else {
+                    document.getElementById('fingerprintMatch').innerHTML = '<span class="status inactive">MISMATCH ✗</span>';
+                }
+            } else {
+                document.getElementById('fingerprintMatch').innerHTML = '<span class="status unknown">Not Set</span>';
+            }
+            
+            document.getElementById('username').textContent = data.username || 'Not set';
+            document.getElementById('banned').textContent = data.banned ? 'YES ⚠️' : 'No';
+            
+            if (data.verifiedAt) {
+                const date = new Date(data.verifiedAt);
+                document.getElementById('verifiedAt').textContent = date.toLocaleString();
+            } else {
+                document.getElementById('verifiedAt').textContent = 'Unknown';
+            }
+            
+            document.getElementById('deviceData').textContent = JSON.stringify(data, null, 2);
+        }
+
+        function clearLocalStorage() {
+            if (confirm('Clear localStorage? This will remove the stored device ID.')) {
+                localStorage.removeItem('linkit_device_id');
+                alert('LocalStorage cleared!');
+                location.reload();
+            }
+        }
+
+        function clearAll() {
+            if (confirm('This will clear localStorage. Continue?')) {
+                localStorage.clear();
+                alert('Everything cleared! You can now start fresh.');
+                location.reload();
+            }
+        }
+
+        function testAutoLogin() {
+            window.location.href = 'login.html';
+        }
+
+        function testTampering() {
+            if (confirm('This will modify the encrypted device ID to test tampering detection.\n\nThe system should:\n1. Detect the tampering\n2. Show "Tampered ✗" status\n3. Force re-verification on login\n\nContinue?')) {
+                const current = localStorage.getItem('linkit_device_id');
+                if (current) {
+                    // Modify the encrypted value slightly
+                    const tampered = current.substring(0, current.length - 5) + 'XXXXX';
+                    localStorage.setItem('linkit_device_id', tampered);
+                    alert('Device ID has been tampered with!\n\nRefresh this page to see the security check fail.');
+                    location.reload();
+                } else {
+                    alert('No device ID to tamper with. Complete verification first.');
+                }
+            }
+        }
+
+        // Manual device sync function
+        async function syncDeviceManually() {
+            const deviceId = document.getElementById('manualDeviceId').value.trim();
+            
+            if (!deviceId) {
+                alert('Please enter a device ID');
+                return;
+            }
+
+            try {
+                console.log('Manually syncing device ID:', deviceId);
+                
+                // Check if device exists in Firebase
+                const deviceRef = database.ref('verified_devices/' + deviceId);
+                const snapshot = await deviceRef.once('value');
+                const deviceData = snapshot.val();
+                
+                if (!deviceData) {
+                    alert('Device ID not found in Firebase!\n\nPlease check the ID and try again.');
+                    return;
+                }
+
+                console.log('Device found in Firebase:', deviceData);
+
+                // Encrypt and store in localStorage
+                const encrypted = await setSecureStorage('linkit_device_id', deviceId);
+                console.log('Encrypted device ID:', encrypted);
+
+                // Update Firebase with encrypted ID and fingerprint
+                await deviceRef.update({
+                    encryptedDeviceId: encrypted,
+                    browserFingerprint: deviceFingerprint,
+                    lastWebLogin: Date.now(),
+                    manuallySync: true
+                });
+
+                alert('Device ID synced successfully!\n\nDevice ID: ' + deviceId + '\n\nRefresh the page to see the updated status.');
+                location.reload();
+
+            } catch (error) {
+                console.error('Sync error:', error);
+                alert('Error syncing device: ' + error.message);
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('Page loaded, starting initialization...');
+            init();
+        });
+    </script>
+</body>
+</html>

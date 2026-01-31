@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - TheHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Header */
+        .header {
+            position: relative;
+            z-index: 10;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .username-display {
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: rgba(143, 247, 25, 0.2);
+            border: 1px solid #16d384;
+            color: #dce6df;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #2563d6;
+            color: white;
+        }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .welcome-title {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .welcome-subtitle {
+            color: var(--text-secondary);
+            font-size: 18px;
+        }
+
+        /* Video Player Section */
+        .video-section {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: slideUp 1s ease-out;
+            position: relative;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .video-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: var(--accent);
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+        }
+
+        /* Remove all video controls */
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        video::-webkit-media-controls {
+            display: none !important;
+        }
+
+        video::-webkit-media-controls-enclosure {
+            display: none !important;
+        }
+
+        video::-webkit-media-controls-panel {
+            display: none !important;
+        }
+
+        video::-webkit-media-controls-play-button {
+            display: none !important;
+        }
+
+        video::-webkit-media-controls-start-playback-button {
+            display: none !important;
+        }
+
+        /* Overlay to prevent right-click and interactions */
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            cursor: default;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(59, 130, 246, 0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            margin-top: 30px;
+            text-align: center;
+            padding: 15px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            border-radius: 12px;
+            color: #10b981;
+        }
+
+        .status-bar.banned {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .welcome-title {
+                font-size: 32px;
+            }
+
+            .video-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">TheHub</div>
+        <div class="user-info">
+            <span class="username-display" id="usernameDisplay">Loading...</span>
+            <button class="logout-btn" id="logoutBtn">Debug</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container" id="mainContent" style="display: none;">
+        <div class="welcome-section">
+            <h1 class="welcome-title">Welcome to Your Dashboard</h1>
+            <p class="welcome-subtitle">Enjoy exclusive content</p>
+        </div>
+
+        <div class="video-section">
+            <h2 class="video-title">Featured Video</h2>
+            <div class="video-container">
+                <!-- Video Player - Replace 'your-video.mp4' with your actual video file -->
+                <video id="mainVideo" autoplay loop muted playsinline>
+                    <source src="video.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <!-- Overlay to prevent user interaction -->
+                <div class="video-overlay"></div>
+            </div>
+            <div class="status-bar" id="statusBar">
+                ✓ Video is playing
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div class="loading" id="loadingScreen">
+        <div class="spinner"></div>
+        <p class="loading-text">Verifying your access...</p>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB4R88Z49bHGPq4xGGDMaKyEqorrYAbOIE",
+            authDomain: "linkit-32d13.firebaseapp.com",
+            databaseURL: "https://linkit-32d13-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "linkit-32d13",
+            storageBucket: "linkit-32d13.appspot.com",
+            messagingSenderId: "263530134949",
+            appId: "1:263530134949:web:ead6c09dffa2510ce3fc4c"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Security: Same encryption as auth.js
+        const ENCRYPTION_SALT = 'LinkIT_SecureAuth_2024_v1';
+
+        async function decryptData(encryptedData) {
+            try {
+                const decoded = atob(encryptedData);
+                const [data, storedHash] = decoded.split('|');
+                
+                const encoder = new TextEncoder();
+                const dataBuffer = encoder.encode(data + ENCRYPTION_SALT);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const calculatedHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                
+                if (calculatedHash === storedHash) {
+                    return data;
+                } else {
+                    return null;
+                }
+            } catch (error) {
+                return null;
+            }
+        }
+
+        async function getSecureStorage(key) {
+            const encrypted = localStorage.getItem(key);
+            if (!encrypted) return null;
+            return await decryptData(encrypted);
+        }
+
+        // Monitor device status for ban changes
+        function monitorDeviceStatus(deviceId, userData) {
+            const deviceRef = database.ref('verified_devices/' + deviceId);
+            
+            deviceRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                
+                if (data) {
+                    if (data.banned === true) {
+                        alert('Your account has been banned!');
+                        localStorage.clear();
+                        window.location.href = 'login.html';
+                    }
+                } else {
+                    alert('Your device authorization has been revoked.');
+                    localStorage.clear();
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        // Initialize video with full volume and ensure it plays
+        function initializeVideo() {
+            const video = document.getElementById('mainVideo');
+            
+            // Set volume to maximum
+            video.volume = 1.0;
+            
+            // Remove muted to enable sound
+            video.muted = false;
+            
+            // Force play
+            const playPromise = video.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log('Video playing successfully');
+                }).catch(error => {
+                    console.log('Autoplay blocked, trying again...');
+                    // Try playing after user interaction
+                    document.body.addEventListener('click', () => {
+                        video.play();
+                    }, { once: true });
+                });
+            }
+
+            // Prevent any pause attempts
+            video.addEventListener('pause', (e) => {
+                video.play();
+            });
+
+            // Prevent any volume change attempts
+            video.addEventListener('volumechange', (e) => {
+                if (video.volume !== 1.0) {
+                    video.volume = 1.0;
+                }
+                if (video.muted) {
+                    video.muted = false;
+                }
+            });
+
+            // Disable right-click on video
+            video.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                return false;
+            });
+
+            // Prevent keyboard controls
+            document.addEventListener('keydown', (e) => {
+                // Prevent spacebar (pause), arrow keys (seek), etc.
+                if (e.target === video || e.keyCode === 32 || e.keyCode === 37 || e.keyCode === 39) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        // Verify user and load dashboard
+        async function verifyAndLoadDashboard() {
+            try {
+                const deviceId = await getSecureStorage('linkit_device_id');
+                
+                if (!deviceId) {
+                    // No device ID, redirect to login
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Get device data from Firebase
+                const deviceRef = database.ref('verified_devices/' + deviceId);
+                const snapshot = await deviceRef.once('value');
+                const deviceData = snapshot.val();
+
+                if (!deviceData) {
+                    // Device not found
+                    localStorage.clear();
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                if (deviceData.banned) {
+                    // Device is banned
+                    alert('Your account has been banned.');
+                    localStorage.clear();
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                if (deviceData.status !== 'active' || !deviceData.username) {
+                    // Not fully set up
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Update last login
+                await deviceRef.update({
+                    lastWebLogin: Date.now()
+                });
+
+                // Store encrypted ID in Firebase if not already there
+                const encryptedDeviceId = localStorage.getItem('linkit_device_id');
+                if (encryptedDeviceId && !deviceData.encryptedDeviceId) {
+                    await deviceRef.update({
+                        encryptedDeviceId: encryptedDeviceId
+                    });
+                }
+
+                // Start monitoring for ban status
+                monitorDeviceStatus(deviceId, deviceData);
+
+                // Display user info
+                document.getElementById('usernameDisplay').textContent = deviceData.username;
+
+                // Hide loading, show content
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+
+                // Initialize video
+                initializeVideo();
+
+            } catch (error) {
+                console.error('Error verifying user:', error);
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Logout function
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to visit the Debug Menu?')) {
+                localStorage.clear();
+                window.location.href = 'debug.html';
+            }
+        });
+
+        // Initialize on page load
+        verifyAndLoadDashboard();
+    </script>
+</body>
+</html>
