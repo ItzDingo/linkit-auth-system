@@ -292,28 +292,19 @@
     <div class="container" id="mainContent" style="display: none;">
         <div class="welcome-section">
             <h1 class="welcome-title">Welcome to The Dashboard</h1>
-            <p class="welcome-subtitle"</p>
+            <p class="welcome-subtitle"></p>
         </div>
 
         <div class="video-section">
             <h2 class="video-title">Featured Video</h2>
-            <div class="video-container">
-                <!-- YouTube Player - Replace VIDEO_ID with your YouTube video ID -->
-                <iframe 
-                    id="youtubePlayer"
-                    width="100%" 
-                    height="100%" 
-                    src="https://www.youtube.com/embed/dGlgAgVcfq8?autoplay=1&loop=1&controls=0&disablekb=1&fs=0&modestbranding=1&playsinline=1&rel=0&showinfo=0&mute=0&playlist=VIDEO_ID&enablejsapi=1"
-                    title="Featured Video" 
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    style="pointer-events: none;"
-                ></iframe>
-                <!-- Overlay to prevent user interaction -->
-                <div class="video-overlay"></div>
+            <div class="video-container" id="videoContainer">
+                <!-- YouTube Player will be loaded here dynamically -->
+                <div id="videoLoadingMessage" style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary); font-size: 16px;">
+                    Loading video...
+                </div>
             </div>
             <div class="status-bar" id="statusBar">
-                ✓ Video is playing
+                ⏳ Loading video...
             </div>
         </div>
     </div>
@@ -329,6 +320,39 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <script>
+        // ============================================
+        // CONFIGURATION - CHANGE YOUR VIDEO HERE
+        // ============================================
+        
+        // Paste your full YouTube URL here:
+        const YOUTUBE_VIDEO_URL = 'https://www.youtube.com/watch?v=dGlgAgVcfq8';
+        
+        // Extract video ID from URL
+        function getVideoIdFromUrl(url) {
+            const urlPatterns = [
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\?\/]+)/,
+                /youtube\.com\/watch\?.*v=([^&]+)/
+            ];
+            
+            for (const pattern of urlPatterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    return match[1];
+                }
+            }
+            
+            return null;
+        }
+        
+        const VIDEO_ID = getVideoIdFromUrl(YOUTUBE_VIDEO_URL);
+        
+        console.log('YouTube Video URL:', YOUTUBE_VIDEO_URL);
+        console.log('Extracted Video ID:', VIDEO_ID);
+        
+        // ============================================
+        // END CONFIGURATION
+        // ============================================
+
         // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyB4R88Z49bHGPq4xGGDMaKyEqorrYAbOIE",
@@ -397,8 +421,71 @@
         // YouTube Player API
         let player;
         
+        // Create the YouTube iframe dynamically
+        function createYouTubePlayer() {
+            if (!VIDEO_ID) {
+                document.getElementById('videoLoadingMessage').innerHTML = 
+                    '<div style="text-align: center; color: var(--error);">' +
+                    '❌ Invalid YouTube URL<br>' +
+                    '<small>Please check the YOUTUBE_VIDEO_URL in the code</small>' +
+                    '</div>';
+                document.getElementById('statusBar').textContent = '❌ Video URL is invalid';
+                document.getElementById('statusBar').style.background = 'rgba(239, 68, 68, 0.1)';
+                document.getElementById('statusBar').style.borderColor = '#ef4444';
+                document.getElementById('statusBar').style.color = '#ef4444';
+                return;
+            }
+            
+            const videoContainer = document.getElementById('videoContainer');
+            
+            // Create iframe
+            const iframe = document.createElement('iframe');
+            iframe.id = 'youtubePlayer';
+            iframe.width = '100%';
+            iframe.height = '100%';
+            iframe.src = `https://www.youtube.com/embed/${VIDEO_ID}?autoplay=1&loop=1&controls=0&disablekb=1&fs=0&modestbranding=1&playsinline=1&rel=0&showinfo=0&mute=0&playlist=${VIDEO_ID}&enablejsapi=1`;
+            iframe.title = 'Featured Video';
+            iframe.frameBorder = '0';
+            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+            iframe.style.pointerEvents = 'none';
+            
+            // Create overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'video-overlay';
+            
+            // Clear loading message and add iframe
+            videoContainer.innerHTML = '';
+            videoContainer.appendChild(iframe);
+            videoContainer.appendChild(overlay);
+            
+            // Check if video loads successfully
+            iframe.onload = function() {
+                console.log('YouTube iframe loaded successfully');
+                document.getElementById('statusBar').textContent = '✓ Video is playing';
+            };
+            
+            iframe.onerror = function() {
+                console.error('Failed to load YouTube video');
+                videoContainer.innerHTML = 
+                    '<div style="display: flex; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 20px; flex-direction: column; color: var(--error);">' +
+                    '<div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>' +
+                    '<div style="font-size: 18px; margin-bottom: 10px;">Video Cannot Be Embedded</div>' +
+                    '<div style="font-size: 14px; color: var(--text-secondary);">This video has embedding disabled by the owner.<br>' +
+                    'Please choose a different video or enable embedding in YouTube Studio.</div>' +
+                    '</div>';
+                document.getElementById('statusBar').textContent = '❌ Video embedding disabled';
+                document.getElementById('statusBar').style.background = 'rgba(239, 68, 68, 0.1)';
+                document.getElementById('statusBar').style.borderColor = '#ef4444';
+                document.getElementById('statusBar').style.color = '#ef4444';
+            };
+        }
+        
         // Load YouTube IFrame API
         function loadYouTubeAPI() {
+            // First create the player iframe
+            createYouTubePlayer();
+            
+            // Then load the API
             const tag = document.createElement('script');
             tag.src = 'https://www.youtube.com/iframe_api';
             const firstScriptTag = document.getElementsByTagName('script')[0];
