@@ -378,12 +378,12 @@
                     if (data.banned === true) {
                         alert('Your account has been banned!');
                         localStorage.clear();
-                        window.location.href = 'login.html';
+                        window.location.href = 'index.html';
                     }
                 } else {
                     alert('Your device authorization has been revoked.');
                     localStorage.clear();
-                    window.location.href = 'login.html';
+                    window.location.href = 'index.html';
                 }
             });
         }
@@ -450,7 +450,7 @@
                 
                 if (!deviceId) {
                     // No device ID, redirect to login
-                    window.location.href = 'login.html';
+                    window.location.href = 'index.html';
                     return;
                 }
 
@@ -462,7 +462,7 @@
                 if (!deviceData) {
                     // Device not found
                     localStorage.clear();
-                    window.location.href = 'login.html';
+                    window.location.href = 'index.html';
                     return;
                 }
 
@@ -470,13 +470,13 @@
                     // Device is banned
                     alert('Your account has been banned.');
                     localStorage.clear();
-                    window.location.href = 'login.html';
+                    window.location.href = 'index.html';
                     return;
                 }
 
                 if (deviceData.status !== 'active' || !deviceData.username) {
                     // Not fully set up
-                    window.location.href = 'login.html';
+                    window.location.href = 'index.html';
                     return;
                 }
 
@@ -508,7 +508,7 @@
 
             } catch (error) {
                 console.error('Error verifying user:', error);
-                window.location.href = 'login.html';
+                window.location.href = 'index.html';
             }
         }
 
